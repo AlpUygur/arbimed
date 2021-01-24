@@ -1,0 +1,53 @@
+﻿@model IEnumerable<arbimed.Models.Trip>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.VehicleId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DriverId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DistanceInKilometers)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FuelConsumptionInLitres)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.VehicleId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DriverId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DistanceInKilometers)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FuelConsumptionInLitres)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.TripId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.TripId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.TripId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
