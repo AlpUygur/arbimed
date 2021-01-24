@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using arbimed.Data;
 
 namespace arbimed.Migrations
 {
     [DbContext(typeof(ArbimedContext))]
-    partial class ArbimedContextModelSnapshot : ModelSnapshot
+    [Migration("20210124130923_addTripToDatabase")]
+    partial class addTripToDatabase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

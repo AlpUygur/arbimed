@@ -59,6 +59,33 @@ namespace arbimed.Controllers
             if (ModelState.IsValid)
             {
                 _context.Add(trip);
+
+                var driver = _context.Driver.Where(a => a.DriverId == trip.DriverId).FirstOrDefault();
+                if (driver != null)
+                {
+
+                    driver.UsedVehicleCount += 1;
+                    _context.Update(driver);
+                }
+                else
+                {
+                    
+                }
+                               
+                var vehicle = _context.Vehicle.Where(a => a.VehicleID == trip.VehicleId).FirstOrDefault();
+                if (vehicle != null)
+                {
+
+                    vehicle.LastTripDateTime = DateTime.Now;
+                    vehicle.AverageFuelConsumptionInLitres = (vehicle.TotalTravelDistanceInKilometers * vehicle.AverageFuelConsumptionInLitres + trip.FuelConsumptionInLitres)/(vehicle.TotalTravelDistanceInKilometers + trip.DistanceInKilometers);
+                    vehicle.TotalTravelDistanceInKilometers += trip.DistanceInKilometers;
+                    _context.Update(vehicle);
+                }
+                else
+                {
+                    
+                }
+
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }

@@ -12,11 +12,15 @@ namespace arbimed.Models
     {
         [Key]
         public int TripId { get; set; }
+        [Required(ErrorMessage = "This field is requied")]
         public int VehicleId { get; set; }
+        [Required(ErrorMessage = "This field is requied")]
         public int DriverId { get; set; }
         [Column(TypeName = "decimal(18, 2)")]
+        [Required(ErrorMessage = "This field is requied")]
         public decimal DistanceInKilometers { get; set; }
         [Column(TypeName = "decimal(18, 2)")]
+        [Required(ErrorMessage = "This field is requied")]
         public decimal FuelConsumptionInLitres { get; set; }
 
   
