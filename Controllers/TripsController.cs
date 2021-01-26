@@ -58,36 +58,45 @@ namespace arbimed.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(trip);
 
+                Boolean isValid = true;
                 var driver = _context.Driver.Where(a => a.DriverId == trip.DriverId).FirstOrDefault();
                 if (driver != null)
                 {
 
                     driver.UsedVehicleCount += 1;
-                    _context.Update(driver);
+                    
                 }
                 else
                 {
-                    
+                    ModelState.AddModelError("DriverID", "DriverID not found!");
+                    isValid = false;
                 }
-                               
+
                 var vehicle = _context.Vehicle.Where(a => a.VehicleID == trip.VehicleId).FirstOrDefault();
                 if (vehicle != null)
                 {
 
                     vehicle.LastTripDateTime = DateTime.Now;
-                    vehicle.AverageFuelConsumptionInLitres = (vehicle.TotalTravelDistanceInKilometers * vehicle.AverageFuelConsumptionInLitres + trip.FuelConsumptionInLitres)/(vehicle.TotalTravelDistanceInKilometers + trip.DistanceInKilometers);
+                    vehicle.AverageFuelConsumptionInLitres = (vehicle.TotalTravelDistanceInKilometers * vehicle.AverageFuelConsumptionInLitres + trip.FuelConsumptionInLitres) / (vehicle.TotalTravelDistanceInKilometers + trip.DistanceInKilometers);
                     vehicle.TotalTravelDistanceInKilometers += trip.DistanceInKilometers;
-                    _context.Update(vehicle);
+                    
                 }
                 else
                 {
-                    
+                    ModelState.AddModelError("VehicleID", "VehicleID not found!");
+                    isValid = false;
                 }
 
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (isValid)
+                {
+                    _context.Update(driver);
+                    _context.Update(vehicle);
+                    _context.Add(trip);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+
             }
             return View(trip);
         }
@@ -122,10 +131,115 @@ namespace arbimed.Controllers
 
             if (ModelState.IsValid)
             {
+                Boolean isValid = true;
                 try
                 {
-                    _context.Update(trip);
-                    await _context.SaveChangesAsync();
+                    var oldtrip = _context.Trip.Where(a => a.TripId == trip.TripId).AsNoTracking<Trip>().FirstOrDefault();
+
+                    if (oldtrip.DriverId != trip.DriverId)
+                    {
+                        var olddriver = _context.Driver.Where(a => a.DriverId == oldtrip.DriverId).FirstOrDefault();
+                        var newdriver = _context.Driver.Where(a => a.DriverId == trip.DriverId).FirstOrDefault();
+
+                        if (newdriver != null)
+                        {
+                            if (olddriver != null)
+                            {
+
+                                olddriver.UsedVehicleCount -= 1;
+                                _context.Update(olddriver);
+                                
+                            }
+                            newdriver.UsedVehicleCount += 1;
+                            _context.Update(newdriver);
+                           
+                        }
+                        else
+                        {
+
+                            ModelState.AddModelError("DriverID", "DriverID not found!");
+                            isValid = false;
+
+                        }
+
+                    }
+
+                    if (oldtrip.VehicleId != trip.VehicleId)
+                    {
+                        var oldvehicle = _context.Vehicle.Where(a => a.VehicleID == oldtrip.VehicleId).FirstOrDefault();
+                        var newvehicle = _context.Vehicle.Where(a => a.VehicleID == trip.VehicleId).FirstOrDefault();
+
+
+                        if (newvehicle != null)
+                        {
+                            if (oldvehicle != null)
+                            {
+                                var km = oldvehicle.TotalTravelDistanceInKilometers - oldtrip.DistanceInKilometers;
+                                if (km == 0)
+                                {
+                                    oldvehicle.AverageFuelConsumptionInLitres = Decimal.Zero;
+                                    oldvehicle.TotalTravelDistanceInKilometers = Decimal.Zero;
+
+                                }
+                                else
+                                {
+                                    oldvehicle.AverageFuelConsumptionInLitres = (oldvehicle.TotalTravelDistanceInKilometers * oldvehicle.AverageFuelConsumptionInLitres - oldtrip.FuelConsumptionInLitres) / (oldvehicle.TotalTravelDistanceInKilometers - oldtrip.DistanceInKilometers);
+                                    oldvehicle.TotalTravelDistanceInKilometers -= trip.DistanceInKilometers;
+
+                                }
+                                _context.Update(oldvehicle);
+                                
+                            }
+                            newvehicle.LastTripDateTime = DateTime.Now;
+                            newvehicle.AverageFuelConsumptionInLitres = (newvehicle.TotalTravelDistanceInKilometers * newvehicle.AverageFuelConsumptionInLitres + trip.FuelConsumptionInLitres) / (newvehicle.TotalTravelDistanceInKilometers + trip.DistanceInKilometers);
+                            newvehicle.TotalTravelDistanceInKilometers += trip.DistanceInKilometers;
+                            _context.Update(newvehicle);
+                           
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("VehicleID", "VehicleID not found!");
+                            isValid = false;
+                        }
+
+                    }
+                    var vehicle = _context.Vehicle.Where(a => a.VehicleID == trip.VehicleId).FirstOrDefault();
+                    if (oldtrip.FuelConsumptionInLitres != trip.FuelConsumptionInLitres)
+                    {
+
+                        var lt = vehicle.AverageFuelConsumptionInLitres * vehicle.TotalTravelDistanceInKilometers;
+                        lt -= (oldtrip.FuelConsumptionInLitres - trip.FuelConsumptionInLitres);
+                        vehicle.AverageFuelConsumptionInLitres = lt / vehicle.TotalTravelDistanceInKilometers;
+                        _context.Update(vehicle);
+                       
+                    }
+                    if (oldtrip.DistanceInKilometers != trip.DistanceInKilometers)
+                    {
+                       
+                        var lt = vehicle.AverageFuelConsumptionInLitres * vehicle.TotalTravelDistanceInKilometers;
+                        var km = oldtrip.DistanceInKilometers;
+                        km -= (oldtrip.DistanceInKilometers - trip.DistanceInKilometers);
+                        if (km == 0)
+                        {
+                            vehicle.AverageFuelConsumptionInLitres = Decimal.Zero;
+                            _context.Update(vehicle);
+                            
+                        }
+                        else
+                        {
+                            vehicle.AverageFuelConsumptionInLitres = lt / km;
+                            vehicle.TotalTravelDistanceInKilometers = km;
+                            _context.Update(vehicle);
+                            
+                        }
+
+                    }
+                    if (isValid)
+                    {
+                        _context.Update(trip);
+                        await _context.SaveChangesAsync();
+                        return RedirectToAction(nameof(Index));
+                    }
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -138,9 +252,9 @@ namespace arbimed.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return View(trip);
             }
-            return View(trip);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Trips/Delete/5
@@ -167,6 +281,34 @@ namespace arbimed.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var trip = await _context.Trip.FindAsync(id);
+
+            var driver = _context.Driver.Where(a => a.DriverId == trip.DriverId).FirstOrDefault();
+            if (driver != null)
+            {
+
+                driver.UsedVehicleCount -= 1;
+                _context.Update(driver);
+            }
+            var vehicle = _context.Vehicle.Where(a => a.VehicleID == trip.VehicleId).FirstOrDefault();
+            if (vehicle != null)
+            {
+                var km = vehicle.TotalTravelDistanceInKilometers - trip.DistanceInKilometers;
+                if (km == 0)
+                {
+                    vehicle.AverageFuelConsumptionInLitres = Decimal.Zero;
+                    vehicle.TotalTravelDistanceInKilometers = Decimal.Zero;
+
+                }
+                else
+                {
+                    vehicle.AverageFuelConsumptionInLitres = (vehicle.TotalTravelDistanceInKilometers * vehicle.AverageFuelConsumptionInLitres - trip.FuelConsumptionInLitres) / (vehicle.TotalTravelDistanceInKilometers - trip.DistanceInKilometers);
+                    vehicle.TotalTravelDistanceInKilometers -= trip.DistanceInKilometers;
+
+                }
+                _context.Update(vehicle);
+
+            }
+
             _context.Trip.Remove(trip);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
