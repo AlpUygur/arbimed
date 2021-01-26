@@ -17,7 +17,7 @@ namespace arbimed.Models
        
         public Driver()
         {
-            UsedVehicleCount = 0;
+            UsedVehicleCount += 0;
         }
 
     }

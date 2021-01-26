@@ -25,8 +25,8 @@ namespace arbimed.Models
 
         public Vehicle()
         {
-            TotalTravelDistanceInKilometers = 0;
-            AverageFuelConsumptionInLitres = 0;
+            TotalTravelDistanceInKilometers += 0;
+            AverageFuelConsumptionInLitres += 0;
         }
 
     }
